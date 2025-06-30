@@ -1,19 +1,35 @@
 -- file_rpc_client.lua
 
--- 0) Configure these to point at your TW:W3 install:
+-- 0) Paths to your game directory
 local GAME_ROOT     = "D:/SteamLibrary/steamapps/common/Total War WARHAMMER III/"
 local SNIPPET_PATH  = GAME_ROOT .. "vscode_snippet.lua"
 local RESPONSE_PATH = GAME_ROOT .. "vscode_stub_response.txt"
 local JSON_TIMEOUT  = 3  -- seconds
 
--- 1) Load rxi's JSON module
+-- 1) Load rxi/json.lua
 local json = require("wh3_lua_debugger.vscode.rxi_json")
 
--- 2) JSON-RPC over files client
+-- 2) JSON‐RPC client definition
 local client = {}
 client.__index = client
 
--- Create a new client with its own ID counter
+-- Helper to build a proxy for interface objects
+local function make_proxy(rpc_instance, id)
+  return setmetatable({ __id = id, __rpc = rpc_instance }, {
+    __index = function(self, method_name)
+      -- return a function that calls invoke_interface on *this* rpc_instance
+      return function(_, ...)
+        return rpc_instance:call("invoke_interface", {
+          { __iface = true, id = self.__id },
+          method_name,
+          { ... }
+        })
+      end
+    end
+  })
+end
+
+-- Constructor
 function client.new(timeout)
   return setmetatable({
     timeout = timeout or JSON_TIMEOUT,
@@ -21,23 +37,17 @@ function client.new(timeout)
   }, client)
 end
 
--- Send JSON-RPC request (and clear any stale response first)
-function client:send_request(request)
-  -- remove any leftover response
+-- Send JSON-RPC request
+function client:send_request(req)
   os.remove(RESPONSE_PATH)
-
-  local payload = json.encode(request)
+  local payload = json.encode(req)
   local f, err = io.open(SNIPPET_PATH, "w")
-  if not f then
-    error(("Could not open snippet file '%s': %s"):format(SNIPPET_PATH, tostring(err)))
-  end
+  if not f then error(("Could not open snippet file '%s': %s"):format(SNIPPET_PATH, tostring(err))) end
   f:write(payload)
   f:close()
-  -- debug
-  print(("[RPC] Wrote request id=%d to %s"):format(request.id, SNIPPET_PATH))
 end
 
--- Wait for and read the JSON-RPC response
+-- Receive and decode JSON-RPC response
 function client:recv_response()
   local start = os.time()
   while os.time() - start < self.timeout do
@@ -46,17 +56,20 @@ function client:recv_response()
       local raw = rf:read("*a")
       rf:close()
       os.remove(RESPONSE_PATH)
-      -- debug
-      print(("[RPC] Read response from %s"):format(RESPONSE_PATH))
-      return json.decode(raw)
+      local resp = json.decode(raw)
+      -- if it's an interface descriptor, return a proxy bound to this client
+      if type(resp.result) == "table" and resp.result.__iface then
+        return make_proxy(self, resp.result.id)
+      end
+      return resp.result
     end
-    -- simple 1s busy-wait
+    -- 1s busy‐wait
     local t0 = os.time() while os.time() == t0 do end
   end
   error(("RPC timeout after %d seconds (no response at %s)"):format(self.timeout, RESPONSE_PATH))
 end
 
--- Public API: call(method, params) → result
+-- Public API: call(method, params) → result (or proxy)
 function client:call(method, params)
   local id = self.next_id
   self.next_id = id + 1
@@ -69,16 +82,8 @@ function client:call(method, params)
   }
 
   self:send_request(req)
-  local resp = self:recv_response()
-
-  if resp.id ~= id then
-    error(("Mismatched response id: expected %d got %s"):format(id, tostring(resp.id)))
-  end
-  if resp.error then
-    error(("RPC error: %s"):format(json.encode(resp.error)))
-  end
-
-  return resp.result
+  local result = self:recv_response()
+  return result
 end
 
 return client

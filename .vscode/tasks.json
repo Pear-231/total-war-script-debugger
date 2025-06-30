@@ -1,0 +1,25 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Publish Lua Snippet",
+      "type": "shell",
+      "command": "copy",
+      "args": [
+        "${file}",
+        "D:/SteamLibrary/steamapps/common/Total War WARHAMMER III/vscode_snippet.lua"
+      ],
+      "windows": {
+        "args": [
+          "${file}",
+          "D:/SteamLibrary/steamapps/common/Total War WARHAMMER III/vscode_snippet.lua"
+        ]
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "never",
+        "panel": "shared"
+      }
+    }
+  ]
+}
