@@ -1,4 +1,4 @@
-local rpc = require("wh3_lua_debugger.vscode.file_rpc_client").new(3)
+local rpc = require("wh3_lua_debugger.vscode.client").new(3)
 
 -- out proxy
 if type(out) ~= "function" then out = print end
