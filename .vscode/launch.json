@@ -2,7 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Lua: Run Current File w/ CM Stub",
+      "name": "Lua (WH3)",
       "type": "lua",
       "request": "launch",
       "program": "${workspaceFolder}/wh3_lua_debugger/vscode/debug.lua",

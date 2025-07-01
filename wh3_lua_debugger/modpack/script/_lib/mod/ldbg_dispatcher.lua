@@ -23,36 +23,45 @@ local function call_interface(description, fn, parameters)
   end
 end
 
-local function call_cm(fn, parameters)
-  local cm_function = cm[fn]
-  if type(cm_function) ~= "function" then
-    return nil, "No such cm function: " .. tostring(fn)
+local function call_scripting_class(scripting_class_name, function_name, params)
+  local scripting_class = _G[scripting_class_name]
+  if not scripting_class then
+    return nil, "Unknown global object: " .. tostring(scripting_class_name)
   end
 
-  local success, response = pcall(cm_function, cm, unpack(parameters or {}))
+  local class_function = scripting_class[function_name]
+  if type(class_function) ~= "function" then
+    return nil, string.format("No such function on %s: %s", scripting_class_name, function_name)
+  end
+
+  local success, result = pcall(class_function, scripting_class, unpack(params or {}))
   if not success then
-    return nil, response
-  elseif type(response) == "userdata" then
-    return registry.wrap(response)
+    return nil, result
+  elseif type(result) == "userdata" then
+    return registry.wrap(result)
   else
-    return response
+    return result
   end
 end
 
 function dispatcher.handle(request)
   local response = { jsonrpc = "2.0", id = request.id }
-  local result, error_message
+  local result, error
 
   if request.method == "invoke_interface" then
-    result, error_message = call_interface(
+    result, error = call_interface(
       request.params[1], request.params[2], request.params[3]
     )
-  else
-    result, error_message = call_cm(request.method, request.params)
+  elseif request.method == "invoke_scripting_class" then
+    result, error = call_scripting_class(
+      request.params[1],  -- scripting class e.g. cm
+      request.params[2],  --  function name
+      request.params[3]   -- table of parameters
+    )
   end
 
-  if error_message then
-    response.error  = { code = -32601, message = error_message }
+  if error then
+    response.error = { code = -32601, message = error }
   else
     response.result = result
   end

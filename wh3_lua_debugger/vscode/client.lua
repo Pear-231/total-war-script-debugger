@@ -21,7 +21,7 @@ end
 
 function client.new(timeout)
   return setmetatable({
-    timeout = timeout or config.JSON_TIMEOUT,
+    timeout = timeout or config.RCP_TIMEOUT,
     next_id = 1,
   }, client)
 end
@@ -29,9 +29,9 @@ end
 function client:send_request(req)
   os.remove(config.RESPONSE_PATH)
   local payload = json.encode(req)
-  local file, err = io.open(config.SNIPPET_PATH, "w")
+  local file, error_message = io.open(config.REQUEST_PATH, "w")
   if not file then
-    error(("Could not open snippet file '%s': %s"):format(config.SNIPPET_PATH, tostring(err)))
+    error(("Could not open snippet file '%s': %s"):format(config.REQUEST_PATH, tostring(error_message)))
   end
   file:write(payload)
   file:close()

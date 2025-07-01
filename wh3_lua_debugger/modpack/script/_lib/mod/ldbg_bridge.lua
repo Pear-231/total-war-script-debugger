@@ -1,15 +1,14 @@
 local transporter  = require("script._lib.mod.ldbg_transporter")
 local dispatcher = require("script._lib.mod.ldbg_dispatcher")
 
-local gatekeeper = {}
+local bridge = {}
 
-function gatekeeper.poll()
+function bridge.poll()
   local request = transporter.read_request()
   if not request then 
     return 
   end
-
-  out("[WH3 Lua Debugger] Request: \n\n" .. request)
+  out("[WH3 Lua Debugger] Request: \n" .. request)
 
   local success, parsed_request = pcall(require("rxi_json").decode, request)
   if not success or type(parsed_request) ~= "table" then
@@ -28,4 +27,4 @@ function gatekeeper.poll()
   transporter.send_response(response)
 end
 
-return gatekeeper
+return bridge
