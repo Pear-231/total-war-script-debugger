@@ -7,12 +7,12 @@
       "command": "copy",
       "args": [
         "${file}",
-        "D:/SteamLibrary/steamapps/common/Total War WARHAMMER III/vscode_snippet.lua"
+        "D:/SteamLibrary/steamapps/common/Total War WARHAMMER III/wh3_lua_debugger_request.lua"
       ],
       "windows": {
         "args": [
           "${file}",
-          "D:/SteamLibrary/steamapps/common/Total War WARHAMMER III/vscode_snippet.lua"
+          "D:/SteamLibrary/steamapps/common/Total War WARHAMMER III/wh3_lua_debugger_request.lua"
         ]
       },
       "problemMatcher": [],

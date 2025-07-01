@@ -22,6 +22,13 @@
 -- SOFTWARE.
 --
 
+-- WH3 Lua does not contain math.huge for some reason so adding here
+if type(math) ~= "table" then
+  _G.math = { huge = 1/0, pi = 3.141592653589793 }
+elseif math.huge == nil then
+  math.huge = 1/0
+end
+
 local json = { _version = "0.1.2" }
 
 -------------------------------------------------------------------------------

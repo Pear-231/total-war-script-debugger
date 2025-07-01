@@ -2,8 +2,8 @@
 
 -- 0) Paths to your game directory
 local GAME_ROOT     = "D:/SteamLibrary/steamapps/common/Total War WARHAMMER III/"
-local SNIPPET_PATH  = GAME_ROOT .. "vscode_snippet.lua"
-local RESPONSE_PATH = GAME_ROOT .. "vscode_stub_response.txt"
+local SNIPPET_PATH  = GAME_ROOT .. "wh3_lua_debugger_request.lua"
+local RESPONSE_PATH = GAME_ROOT .. "wh3_lua_debugger_response.txt"
 local JSON_TIMEOUT  = 3  -- seconds
 
 -- 1) Load rxi/json.lua
@@ -20,7 +20,7 @@ local function make_proxy(rpc_instance, id)
       -- return a function that calls invoke_interface on *this* rpc_instance
       return function(_, ...)
         return rpc_instance:call("invoke_interface", {
-          { __iface = true, id = self.__id },
+          { __interface = true, id = self.__id },
           method_name,
           { ... }
         })
@@ -58,7 +58,7 @@ function client:recv_response()
       os.remove(RESPONSE_PATH)
       local resp = json.decode(raw)
       -- if it's an interface descriptor, return a proxy bound to this client
-      if type(resp.result) == "table" and resp.result.__iface then
+      if type(resp.result) == "table" and resp.result.__interface then
         return make_proxy(self, resp.result.id)
       end
       return resp.result
@@ -69,21 +69,11 @@ function client:recv_response()
   error(("RPC timeout after %d seconds (no response at %s)"):format(self.timeout, RESPONSE_PATH))
 end
 
--- Public API: call(method, params) → result (or proxy)
 function client:call(method, params)
-  local id = self.next_id
-  self.next_id = id + 1
-
-  local req = {
-    jsonrpc = "2.0",
-    method  = method,
-    params  = params or {},
-    id      = id,
-  }
-
+  local id = self.next_id; self.next_id = id + 1
+  local req = { jsonrpc="2.0", method=method, params=params or {}, id=id }
   self:send_request(req)
-  local result = self:recv_response()
-  return result
+  return self:recv_response()
 end
 
 return client

@@ -5,12 +5,12 @@
       "name": "Lua: Run Current File w/ CM Stub",
       "type": "lua",
       "request": "launch",
-      "program": "${workspaceFolder}/wh3_lua_debugger/vscode/run_file.lua",
+      "program": "${workspaceFolder}/wh3_lua_debugger/vscode/debug.lua",
       "cwd": "${workspaceFolder}",
       "preLaunchTask": "Publish Lua Snippet",
       "stopOnEntry": false,
       "env": {
-        "RUN_FILE": "${file}"
+        "DEBUG": "${file}"
       }
     }
   ]
